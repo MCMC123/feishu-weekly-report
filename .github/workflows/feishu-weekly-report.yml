@@ -1,0 +1,31 @@
+name: Feishu weekly sea freight report
+
+on:
+  schedule:
+    # GitHub Actions uses UTC. 01:00 UTC = 09:00 Asia/Shanghai.
+    - cron: "0 1 * * 1"
+  workflow_dispatch:
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Send Feishu report
+        env:
+          FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
+          FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
+          FEISHU_SPREADSHEET_TOKEN: ${{ secrets.FEISHU_SPREADSHEET_TOKEN }}
+          FEISHU_SHEET_TITLE: ${{ secrets.FEISHU_SHEET_TITLE }}
+          FEISHU_CELL: ${{ secrets.FEISHU_CELL }}
+          FEISHU_BOT_WEBHOOK: ${{ secrets.FEISHU_BOT_WEBHOOK }}
+          FEISHU_BOT_SECRET: ${{ secrets.FEISHU_BOT_SECRET }}
+        run: python feishu_weekly_report.py
