@@ -24,7 +24,7 @@ def env(name, default=None, required=False):
     return value
 
 
-def request_json(method, url, headers=None, payload=None):
+def request_json(method, url, headers=None, payload=None, label=None):
     body = None
     if payload is not None:
         body = json.dumps(payload, ensure_ascii=False).encode("utf-8")
@@ -44,7 +44,8 @@ def request_json(method, url, headers=None, payload=None):
             return json.loads(response.read().decode("utf-8"))
     except urllib.error.HTTPError as exc:
         body = exc.read().decode("utf-8", errors="replace")
-        raise RuntimeError(f"HTTP {exc.code} from {method} {url}: {body}") from exc
+        location = label or urllib.parse.urlsplit(url).path
+        raise RuntimeError(f"{location} failed with HTTP {exc.code}: {body}") from exc
 
 
 def get_tenant_access_token(app_id, app_secret):
@@ -52,6 +53,7 @@ def get_tenant_access_token(app_id, app_secret):
         "POST",
         f"{FEISHU_API}/auth/v3/tenant_access_token/internal",
         payload={"app_id": app_id, "app_secret": app_secret},
+        label="get tenant_access_token",
     )
     if result.get("code") != 0:
         raise RuntimeError(f"Failed to get tenant access token: {result}")
@@ -63,6 +65,7 @@ def list_sheets(token, spreadsheet_token):
         "GET",
         f"{FEISHU_API}/sheets/v3/spreadsheets/{spreadsheet_token}/sheets/query",
         headers={"Authorization": f"Bearer {token}"},
+        label="list spreadsheet sheets",
     )
     if result.get("code") != 0:
         raise RuntimeError(f"Failed to list sheets: {result}")
@@ -100,6 +103,7 @@ def read_cell(token, spreadsheet_token, sheet_id, cell):
         "GET",
         f"{FEISHU_API}/sheets/v2/spreadsheets/{spreadsheet_token}/values/{encoded_range}",
         headers={"Authorization": f"Bearer {token}"},
+        label=f"read cell {range_value}",
     )
     if result.get("code") != 0:
         raise RuntimeError(f"Failed to read cell {range_value}: {result}")
@@ -127,7 +131,7 @@ def send_bot_message(webhook_url, secret, text):
         payload["timestamp"] = timestamp
         payload["sign"] = sign_bot_message(timestamp, secret)
 
-    result = request_json("POST", webhook_url, payload=payload)
+    result = request_json("POST", webhook_url, payload=payload, label="send bot message")
     if result.get("code") not in (0, None):
         raise RuntimeError(f"Failed to send bot message: {result}")
     return result
@@ -143,15 +147,19 @@ def main():
     webhook_url = env("FEISHU_BOT_WEBHOOK", required=True)
     bot_secret = env("FEISHU_BOT_SECRET", "")
 
+    print("Getting tenant access token...", flush=True)
     token = get_tenant_access_token(app_id, app_secret)
+    print("Resolving sheet...", flush=True)
     if sheet_title:
         sheet_id = find_sheet_id(token, spreadsheet_token, sheet_title)
     else:
         sheet_id, sheet_title = find_latest_sheet_id(token, spreadsheet_token, sheet_title_prefix)
 
+    print(f"Reading {sheet_title}!{cell}...", flush=True)
     value = read_cell(token, spreadsheet_token, sheet_id, cell)
     message = f"当前最新海运单价为：{value}元/kg"
 
+    print("Sending bot message...", flush=True)
     send_bot_message(webhook_url, bot_secret, message)
     print(message)
 

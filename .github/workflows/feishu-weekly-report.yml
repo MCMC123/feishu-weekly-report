@@ -21,6 +21,7 @@ jobs:
 
       - name: Send Feishu report
         env:
+          PYTHONUNBUFFERED: "1"
           FEISHU_APP_ID: ${{ secrets.FEISHU_APP_ID }}
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
           FEISHU_SPREADSHEET_TOKEN: ${{ secrets.FEISHU_SPREADSHEET_TOKEN }}
