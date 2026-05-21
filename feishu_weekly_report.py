@@ -7,6 +7,7 @@ import sys
 import time
 import urllib.parse
 import urllib.request
+import urllib.error
 
 
 FEISHU_API = "https://open.feishu.cn/open-apis"
@@ -38,8 +39,12 @@ def request_json(method, url, headers=None, payload=None):
         },
     )
 
-    with urllib.request.urlopen(req, timeout=30) as response:
-        return json.loads(response.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=30) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", errors="replace")
+        raise RuntimeError(f"HTTP {exc.code} from {method} {url}: {body}") from exc
 
 
 def get_tenant_access_token(app_id, app_secret):
