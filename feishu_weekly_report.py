@@ -13,7 +13,11 @@ FEISHU_API = "https://open.feishu.cn/open-apis"
 
 
 def env(name, default=None, required=False):
-    value = os.getenv(name, default)
+    value = os.getenv(name)
+    if value == "":
+        value = None
+    if value is None:
+        value = default
     if required and not value:
         raise RuntimeError(f"Missing required environment variable: {name}")
     return value
@@ -70,6 +74,20 @@ def find_sheet_id(token, spreadsheet_token, sheet_title):
     raise RuntimeError(f"Sheet title not found: {sheet_title}. Available sheets: {available}")
 
 
+def find_latest_sheet_id(token, spreadsheet_token, title_prefix):
+    sheets = list_sheets(token, spreadsheet_token)
+    matched = [
+        sheet for sheet in sheets
+        if sheet.get("title", "").startswith(title_prefix)
+    ]
+    if not matched:
+        available = ", ".join(sheet.get("title", "<unknown>") for sheet in sheets)
+        raise RuntimeError(f"No sheet title starts with {title_prefix}. Available sheets: {available}")
+
+    latest = matched[-1]
+    return latest.get("sheet_id"), latest.get("title")
+
+
 def read_cell(token, spreadsheet_token, sheet_id, cell):
     range_value = f"{sheet_id}!{cell}:{cell}"
     encoded_range = urllib.parse.quote(range_value, safe="")
@@ -114,13 +132,18 @@ def main():
     app_id = env("FEISHU_APP_ID", required=True)
     app_secret = env("FEISHU_APP_SECRET", required=True)
     spreadsheet_token = env("FEISHU_SPREADSHEET_TOKEN", required=True)
-    sheet_title = env("FEISHU_SHEET_TITLE", "报价日期-5月第3周")
+    sheet_title = env("FEISHU_SHEET_TITLE")
+    sheet_title_prefix = env("FEISHU_SHEET_TITLE_PREFIX", "报价日期-")
     cell = env("FEISHU_CELL", "AB4")
     webhook_url = env("FEISHU_BOT_WEBHOOK", required=True)
     bot_secret = env("FEISHU_BOT_SECRET", "")
 
     token = get_tenant_access_token(app_id, app_secret)
-    sheet_id = find_sheet_id(token, spreadsheet_token, sheet_title)
+    if sheet_title:
+        sheet_id = find_sheet_id(token, spreadsheet_token, sheet_title)
+    else:
+        sheet_id, sheet_title = find_latest_sheet_id(token, spreadsheet_token, sheet_title_prefix)
+
     value = read_cell(token, spreadsheet_token, sheet_id, cell)
     message = f"当前最新海运单价为：{value}元/kg"
 

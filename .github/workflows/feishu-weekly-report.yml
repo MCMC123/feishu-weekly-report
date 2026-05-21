@@ -25,6 +25,7 @@ jobs:
           FEISHU_APP_SECRET: ${{ secrets.FEISHU_APP_SECRET }}
           FEISHU_SPREADSHEET_TOKEN: ${{ secrets.FEISHU_SPREADSHEET_TOKEN }}
           FEISHU_SHEET_TITLE: ${{ secrets.FEISHU_SHEET_TITLE }}
+          FEISHU_SHEET_TITLE_PREFIX: ${{ secrets.FEISHU_SHEET_TITLE_PREFIX }}
           FEISHU_CELL: ${{ secrets.FEISHU_CELL }}
           FEISHU_BOT_WEBHOOK: ${{ secrets.FEISHU_BOT_WEBHOOK }}
           FEISHU_BOT_SECRET: ${{ secrets.FEISHU_BOT_SECRET }}

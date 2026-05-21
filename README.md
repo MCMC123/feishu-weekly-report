@@ -1,6 +1,6 @@
 # 飞书每周海运单价播报
 
-这个脚本会读取飞书在线表格中 `报价日期-5月第3周` 工作表的 `AB4` 单元格，并向飞书群机器人发送：
+这个脚本会读取飞书在线表格中 `报价日期-` 开头的最新工作表的 `AB4` 单元格，并向飞书群机器人发送：
 
 ```text
 当前最新海运单价为：（在线表格的取值）元/kg
@@ -14,7 +14,8 @@
 $env:FEISHU_APP_ID="cli_xxxxxxxxxxxxxxxx"
 $env:FEISHU_APP_SECRET="替换成新的 APP_SECRET"
 $env:FEISHU_SPREADSHEET_TOKEN="ZWkQsuOo7h0zywtIqTqcug9enTc"
-$env:FEISHU_SHEET_TITLE="报价日期-5月第3周"
+$env:FEISHU_SHEET_TITLE=""
+$env:FEISHU_SHEET_TITLE_PREFIX="报价日期-"
 $env:FEISHU_CELL="AB4"
 $env:FEISHU_BOT_WEBHOOK="https://open.feishu.cn/open-apis/bot/v2/hook/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
 $env:FEISHU_BOT_SECRET="替换成群机器人签名 secret"
@@ -61,6 +62,7 @@ FEISHU_APP_ID
 FEISHU_APP_SECRET
 FEISHU_SPREADSHEET_TOKEN
 FEISHU_SHEET_TITLE
+FEISHU_SHEET_TITLE_PREFIX
 FEISHU_CELL
 FEISHU_BOT_WEBHOOK
 FEISHU_BOT_SECRET
@@ -70,9 +72,12 @@ FEISHU_BOT_SECRET
 
 ```text
 FEISHU_SPREADSHEET_TOKEN=ZWkQsuOo7h0zywtIqTqcug9enTc
-FEISHU_SHEET_TITLE=报价日期-5月第3周
+FEISHU_SHEET_TITLE=
+FEISHU_SHEET_TITLE_PREFIX=报价日期-
 FEISHU_CELL=AB4
 ```
+
+`FEISHU_SHEET_TITLE` 留空时，脚本会自动选择 `FEISHU_SHEET_TITLE_PREFIX` 开头的最后一个工作表。比如本周是 `报价日期-5月第3周`，下周新增 `报价日期-5月第4周` 后，会自动读取第 4 周。
 
 `FEISHU_APP_SECRET` 和 `FEISHU_BOT_SECRET` 建议使用重置后的新值。
 
